@@ -2,6 +2,10 @@ use rand::{Rng, distributions::Alphanumeric};
 use std::{env, fs::{OpenOptions, create_dir_all}, io::{BufWriter, Write}};
 use time::OffsetDateTime;
 
+mod json_record;
+
+use json_record::{LogLevel, JsonRecord};
+
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
@@ -30,12 +34,12 @@ fn main() -> std::io::Result<()> {
     for i in 0..num {
         let ts = OffsetDateTime::now_utc().unix_timestamp();
         let msg: String = (0..32).map(|_| rng.sample(Alphanumeric) as char).collect();
-        let rec = serde_json::json!({
-            "ts": ts,
-            "level": if i % 10 == 0 { "warn" } else { "info" },
-            "id": i,
-            "msg": msg
-        });
+        let rec = JsonRecord {
+            id: i,
+            level: if i % 10 == 0 { LogLevel::WARN } else { LogLevel::INFO },
+            msg,
+            ts: ts as usize,
+        };
         serde_json::to_writer(&mut w, &rec).unwrap();
         w.write_all(b"\n")?;
     }
