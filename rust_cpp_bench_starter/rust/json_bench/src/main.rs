@@ -1,6 +1,9 @@
 use std::{env, fs::File, io::{BufRead, BufReader}};
 use std::time::Instant;
-use serde_json::Value;
+
+mod json_record;
+
+use json_record::JsonRecord;
 
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -20,10 +23,12 @@ fn main() -> std::io::Result<()> {
         reader.read_line(&mut buf)? > 0
     } {
         if buf.trim().is_empty() { continue; }
-        let _v: Value = match serde_json::from_str(&buf) {
+        let v: JsonRecord = match serde_json::from_str(&buf) {
             Ok(v) => v,
             Err(e) => { eprintln!("parse error: {}", e); continue; }
         };
+        //println!("{:#?}", v);
+        std::hint::black_box(v);
         lines += 1;
     }
     let dur = start.elapsed();
