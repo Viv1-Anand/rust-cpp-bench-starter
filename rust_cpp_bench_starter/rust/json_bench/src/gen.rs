@@ -1,5 +1,5 @@
 use rand::{Rng, distributions::Alphanumeric};
-use std::{env, fs::File, io::{BufWriter, Write}};
+use std::{env, fs::{OpenOptions, create_dir_all}, io::{BufWriter, Write}};
 use time::OffsetDateTime;
 
 fn main() -> std::io::Result<()> {
@@ -9,11 +9,24 @@ fn main() -> std::io::Result<()> {
         std::process::exit(1);
     }
     let num: usize = args[1].parse().expect("num_lines must be a number");
-    let path = &args[2];
-    let f = File::create(path)?;
+    let full_path = &args[2];
+
+    // Create output directory if it doesn't exist
+    let dir_path = std::path::Path::new(full_path).parent().expect("invalid output path");
+    create_dir_all(dir_path)?;
+
+    // Open output file for writing and truncate if it exists
+    let f = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(full_path)?;
+
+    // Create a buffered writer and random number generator
     let mut w = BufWriter::new(f);
     let mut rng = rand::thread_rng();
 
+    // Generate log records
     for i in 0..num {
         let ts = OffsetDateTime::now_utc().unix_timestamp();
         let msg: String = (0..32).map(|_| rng.sample(Alphanumeric) as char).collect();
